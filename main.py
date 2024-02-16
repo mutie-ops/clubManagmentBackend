@@ -16,6 +16,7 @@ def home():
     event_longitude = request.form['eventLongitude']
     event_latitude = request.form['eventLatitude']
     event_name = request.form['eventName']
+    venue_name = request.form['venueName']
     event_time = request.form['eventTime']
     event_date = request.form['eventDate']
     event_image = request.form['eventImage']
@@ -29,8 +30,9 @@ def home():
     with open(filename, 'wb') as f:
         f.write(decode)
 
-    schedule_event = ScheduleEvent(event_name=event_name, event_location=event_location, event_time=event_time
-                                   , event_date=event_date, event_image=event_image,
+    schedule_event = ScheduleEvent(event_name=event_name, event_location=event_location,
+                                   venue_name=venue_name,event_time=event_time,
+                                   event_date=event_date, event_image=event_image,
                                    event_description=event_description)
 
     try:
