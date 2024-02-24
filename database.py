@@ -15,13 +15,14 @@ class ScheduleEvent(Base):
     __tablename__ = 'Schedule_Event'
 
     id = Column(Integer, primary_key=True)
-    event_name = Column(String)
-    venue_name = Column(String)
-    event_location = Column(String)
-    event_time = Column(String)
-    event_date = Column(String)
-    event_image = Column(String)
-    event_description = Column(String)
+    eventName = Column(String)
+    venueName = Column(String)
+    eventLatitude = Column(String)
+    eventLongitude = Column(String)
+    eventTime = Column(String)
+    eventDate = Column(Date)
+    eventDescription = Column(String)
+    eventImage = Column(String)
 
 
 # Step 4: Create the database schema
