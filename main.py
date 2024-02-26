@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
-from database import session, ScheduleEvent
+from database import session, ScheduleEvent,func
 from datetime import datetime
 
 app = Flask(__name__)
@@ -39,9 +39,18 @@ def create_event():
 
 @app.route('/getEvent', methods=['GET'])
 def get_event():
-    # Your logic to retrieve events goes here
+    # logic to retrieve events goes here
     pass
 
 
+#  extract by sustring
+
+events = session.query(ScheduleEvent).filter(func.substr(ScheduleEvent.eventDate, 6,2 )=='02').all()
+
+
+print(events)
+for event in events:
+    # print('events', event.eventName)
+    print(event.eventDate)
 if __name__ == '__main__':
     app.run('0.0.0.0', port=5000, debug=True)
