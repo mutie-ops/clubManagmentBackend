@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
-from database import session, ScheduleEvent,func
+from database import session, ScheduleEvent, func
 from datetime import datetime
 
 app = Flask(__name__)
@@ -37,20 +37,41 @@ def create_event():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/getEvent', methods=['GET'])
-def get_event():
-    # logic to retrieve events goes here
-    pass
+@app.route('/getEventMonth', methods=['GET'])
+def get_event_current_month():
+    # get current month: convert to String append 0 if the length of days is less than 2
+    try:
+        current_month = datetime.now().month
+        if len(str(current_month)) < 2:
+            new_month = '0' + str(current_month)
+            events = session.query(ScheduleEvent).filter(
+                func.substr(ScheduleEvent.eventDate, 6, 2) == str(new_month)).all()
+        else:
+            events = session.query(ScheduleEvent).filter(
+                func.substr(ScheduleEvent.eventDate, 6, 2) == str(current_month)).all()
+
+        current_month_data = []
+        for event in events:
+            extract_data = {
+                'eventName': event.eventName,
+                'venueName': event.venueName,
+                'eventLatitude': event.eventLatitude,
+                'eventLongitude': event.eventLongitude,
+                'eventTime': event.eventTime,
+                'eventDate': event.eventDate,
+                'eventDescription': event.eventDescription,
+                'eventImage': event.eventImage}
+            current_month_data.append(extract_data)
+
+        print('dictionary of current month', current_month_data)
+        return jsonify({'message': 'successful retrival',
+                        'data': current_month,
+                        'status': True})
+    except Exception as e:
+        return jsonify({'message': 'error',
+                        'data': str(e),
+                        'status': False})
 
 
-#  extract by sustring
-
-events = session.query(ScheduleEvent).filter(func.substr(ScheduleEvent.eventDate, 6,2 )=='02').all()
-
-
-print(events)
-for event in events:
-    # print('events', event.eventName)
-    print(event.eventDate)
 if __name__ == '__main__':
     app.run('0.0.0.0', port=5000, debug=True)
