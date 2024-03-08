@@ -56,19 +56,22 @@ def login():
         if not all(field in data for field in request_fields):
             return jsonify({'error': 'Missing required fields'}), 400
 
-        phone_query = session.query(Users).filter(Users.phoneNumber == data['userAccount']).all()
-        email_query = session.query(Users).filter(Users.email == data['userAccount']).all()
-        user_password = session.query(Users).filter(Users.password == data['password']).all()
+        phone_query = session.query(Users).filter(Users.phoneNumber == data['userAccount']).first()
+        email_query = session.query(Users).filter(Users.email == data['userAccount']).first()
 
-        if phone_query is None or email_query is None:
-            return jsonify({'message', 'Account Does not exist'}), 401
-        elif user_password is None:
-            return jsonify({'message', 'Invalid Password'}), 401
+        if not phone_query and not email_query:
+            return jsonify({'message': 'Account does not exist'}), 401
 
-        else:
-            access_token = create_access_token(identity=data['userAccount'])
+        user = phone_query if phone_query else email_query
 
-            return jsonify({'message': 'login successful', 'data': access_token})
+        if user.password != data['password']:
+            return jsonify({'message': 'Invalid Password'}), 401
+
+        # At this point, the user exists and the password is correct
+        access_token = create_access_token(identity=data['userAccount'])
+        return jsonify({'message': 'Successful login', 'data': access_token})
+
+
 
 
     except Exception as e:
