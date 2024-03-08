@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String,Date,Time, func
+from sqlalchemy import create_engine, Column, Integer, String, Date, Time, func, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
@@ -23,6 +23,22 @@ class ScheduleEvent(Base):
     eventDate = Column(Date)
     eventDescription = Column(String)
     eventImage = Column(String)
+
+
+class Users(Base):
+    __tablename__ = 'Users'
+    id = Column(Integer, primary_key=True)
+    fullNames = Column(String)
+    email = Column(String)
+    phoneNumber = Column(Integer)
+    password = Column(String)
+
+
+class Profile(Base):
+    __tablename__ = 'Profile'
+    id = Column(Integer, primary_key=True)
+    subscribed = Column(Boolean)
+    profileImage = Column(String)
 
 
 # Step 4: Create the database schema

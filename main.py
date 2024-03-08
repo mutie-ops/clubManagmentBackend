@@ -1,10 +1,34 @@
+import base64
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
-from database import session, ScheduleEvent, func
+from database import session, ScheduleEvent, func, Users
 from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
+
+
+@app.route('/createUser', methods=['POST'])
+@cross_origin()
+def create_user():
+    try:
+        data = request.form.to_dict()
+        request_fields = ['fullNames', 'phoneNumber', 'email', 'password']
+        if not all(field in data for field in request_fields):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        users = Users(fullNames=data['fullNames'], phoneNumber=data['phoneNumber'],
+                      email=data['email'], password=data['password'])
+
+        session.add(users)
+        session.commit()
+        session.close()
+        return jsonify({'message': 'Event Scheduled Successfully'}), 200
+
+    except Exception as e:
+        print(e)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/postEvent', methods=['POST'])
@@ -24,6 +48,15 @@ def create_event():
             print(ValueError)
             return jsonify({'message': 'Invalid date format for eventDate'}), 400
 
+        # data_image = data['eventImage']
+
+        # print(data_image)
+        # decoded_bytes = base64.b64decode(data_image)
+        # decoded_string = decoded_bytes.decode('utf-8')
+        # print('decode to string', decoded_string)
+        # with open('output.jpg', 'wb') as f:
+        #     f.write(decoded_bytes)
+
         schedule_event = ScheduleEvent(eventName=data['eventName'], venueName=data['venueName'],
                                        eventLatitude=data['eventLatitude'], eventLongitude=data['eventLongitude'],
                                        eventTime=data['eventTime'], eventDate=event_date,
@@ -31,7 +64,7 @@ def create_event():
         session.add(schedule_event)
         session.commit()
         session.close()
-        return jsonify({'message': 'Event Scheduled Successfully'})
+        return jsonify({'message': 'Event Scheduled Successfully'}), 200
     except Exception as e:
         print(e)
         return jsonify({'error': str(e)}), 500
@@ -52,21 +85,31 @@ def get_event_current_month():
 
         current_month_data = []
         for event in events:
+            event_date = event.eventDate
+            formatted_date = event_date.strftime("%d %B %Y")
             extract_data = {
                 'eventName': event.eventName,
                 'venueName': event.venueName,
                 'eventLatitude': event.eventLatitude,
                 'eventLongitude': event.eventLongitude,
                 'eventTime': event.eventTime,
-                'eventDate': event.eventDate,
+                'eventDate': formatted_date,
                 'eventDescription': event.eventDescription,
-                'eventImage': event.eventImage}
+                'eventImage': event.eventImage
+            }
             current_month_data.append(extract_data)
 
         print('dictionary of current month', current_month_data)
-        return jsonify({'message': 'successful retrival',
-                        'data': current_month,
-                        'status': True})
+
+        # DONT REMOVE THE CURRENT_MONTH_DATA HERE FUTURE MUTIE
+        if len(current_month_data) == 0:
+            return jsonify({"message": 'No events listed for current Month',
+                            'data': current_month_data}), 200
+
+        else:
+            return jsonify({'message': 'successful retrival',
+                            'data': current_month_data,
+                            'status': True})
     except Exception as e:
         return jsonify({'message': 'error',
                         'data': str(e),
