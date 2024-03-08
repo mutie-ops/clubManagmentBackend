@@ -21,10 +21,19 @@ def create_user():
         users = Users(fullNames=data['fullNames'], phoneNumber=data['phoneNumber'],
                       email=data['email'], password=data['password'])
 
-        session.add(users)
-        session.commit()
-        session.close()
-        return jsonify({'message': 'Event Scheduled Successfully'}), 200
+        phone_query = session.query(Users).filter(Users.phoneNumber == data['phoneNumber']).all()
+        email_query = session.query(Users).filter(Users.email == data['email']).all()
+
+        if phone_query:
+            return jsonify({'message': 'Phone Number already exists'}), 401
+        elif email_query:
+            return jsonify({'message': 'Email already exists'}), 401
+
+        else:
+            session.add(users)
+            session.commit()
+            session.close()
+            return jsonify({'message': 'User Created Successfully'}), 200
 
     except Exception as e:
         print(e)

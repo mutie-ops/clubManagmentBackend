@@ -29,8 +29,8 @@ class Users(Base):
     __tablename__ = 'Users'
     id = Column(Integer, primary_key=True)
     fullNames = Column(String)
-    email = Column(String)
-    phoneNumber = Column(Integer)
+    email = Column(String,unique=True)
+    phoneNumber = Column(Integer, unique=True)
     password = Column(String)
 
 
