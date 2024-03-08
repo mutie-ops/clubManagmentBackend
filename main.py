@@ -1,11 +1,18 @@
 import base64
-
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 from database import session, ScheduleEvent, func, Users
 from datetime import datetime
 
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
+
 app = Flask(__name__)
+app.config['JWT_SECRET_KEY'] = 'MonkeyDluffy282'
+
+jwt = JWTManager(app)
 CORS(app)
 
 
@@ -38,6 +45,35 @@ def create_user():
     except Exception as e:
         print(e)
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/login', methods=['POST'])
+@cross_origin()
+def login():
+    try:
+        data = request.form.to_dict()
+        request_fields = ['userAccount', 'password']
+        if not all(field in data for field in request_fields):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        phone_query = session.query(Users).filter(Users.phoneNumber == data['userAccount']).all()
+        email_query = session.query(Users).filter(Users.email == data['userAccount']).all()
+        user_password = session.query(Users).filter(Users.password == data['password']).all()
+
+        if phone_query is None or email_query is None:
+            return jsonify({'message', 'Account Does not exist'}), 401
+        elif user_password is None:
+            return jsonify({'message', 'Invalid Password'}), 401
+
+        else:
+            access_token = create_access_token(identity=data['userAccount'])
+
+            return jsonify({'message': 'login successful', 'data': access_token})
+
+
+    except Exception as e:
+        print(e)
+        return jsonify({'message': str(e)}), 500
 
 
 @app.route('/postEvent', methods=['POST'])
