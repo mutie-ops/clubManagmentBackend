@@ -10,7 +10,7 @@ from flask_jwt_extended import get_jwt_identity, JWTManager, verify_jwt_in_reque
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 
-application = app = Flask(__name__)
+app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'MonkeyDluffy282'
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 
@@ -52,6 +52,8 @@ def create_user():
         request_fields = ['fullNames', 'phoneNumber', 'email', 'password']
         if not all(field in data for field in request_fields):
             return jsonify({'error': 'Missing required fields'}), 400
+
+        # TODO: CREATE A HASH PASSWORD  #DONE
 
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), salt)
@@ -277,7 +279,8 @@ def booking():
 
 @app.route('/', methods=['GET'])
 def callBackUrl():
-    return jsonify({'message': 'successful  deployment'})
+    return jsonify({'message': 'successful  login'})
 
-# if __name__ == '__main__':
-#     app.run('0.0.0.0', port=5000, debug=True)
+
+if __name__ == '__main__':
+    app.run('0.0.0.0', port=5000, debug=True)
