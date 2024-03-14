@@ -10,7 +10,7 @@ from flask_jwt_extended import get_jwt_identity, JWTManager, verify_jwt_in_reque
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 
-app = Flask(__name__)
+application = app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'MonkeyDluffy282'
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 
@@ -279,8 +279,8 @@ def booking():
 
 @app.route('/', methods=['GET'])
 def callBackUrl():
-    return jsonify({'message': 'successful  login'})
+    return jsonify({'message': 'successful  deployment'})
 
 
-if __name__ == '__main__':
-    app.run('0.0.0.0', port=5000, debug=True)
+# if __name__ == '__main__':
+#     app.run('0.0.0.0', port=5000, debug=True)
