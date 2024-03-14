@@ -13,6 +13,7 @@ from sqlalchemy.orm import joinedload
 
 application = app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'MonkeyDluffy282'
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 
 jwt = JWTManager(app)
 CORS(app)
@@ -101,7 +102,7 @@ def login():
         user_data = {'userName': user.fullNames, 'phoneNumber': user.phoneNumber, 'isAdmin': user.is_admin}
 
         # At this point, the user exists and the password is correct
-        access_token = create_access_token(identity=user.id, expires_delta=timedelta(days=7))
+        access_token = create_access_token(identity=user.id)
         return jsonify({'message': 'Successful login', 'accessToken': access_token, 'data': user_data, 'status': True})
 
 
@@ -196,11 +197,13 @@ def get_event_current_month():
             }
             current_month_data.append(extract_data)
 
-        print('dictionary of current month', current_month_data)
+        # print('dictionary of current month', current_month_data)
 
         if len(current_month_data) == 0:
+            print('no events listes')
             return jsonify({"message": 'No events listed for the current month', 'data': current_month_data}), 200
         else:
+            print('data sent')
             return jsonify({'message': 'Successful retrieval', 'data': current_month_data, 'status': True})
     except Exception as e:
         print(str(e))
@@ -221,28 +224,44 @@ def booking():
     print(data)
 
     event_id = data['event_id']
-    booked = data['booking'].lower() == 'true'
-    checkedIn = False
+
+    # Update 'booked' only if 'booking' key is available
+    booked = data.get('booking')
+    if booked is not None:
+        booked = booked.lower() == 'true'
+
+    # Update 'checkedIn' only if 'checkIn' key is available
+    checkedIn = data.get('checkIn')
+    if checkedIn is not None:
+        checkedIn = checkedIn.lower() == 'true'
 
     try:
+        # Query to retrieve the specific booking entry for the user and event
         book_event = session.query(EventStatus).filter_by(event_id=event_id, user_id=user_id).one()
-        book_event.checkedIn = checkedIn
-        book_event.booked = booked
+        # Update the booking and check-in status for the specific user and event
+        if booked is not None:
+            book_event.booked = booked
+        if checkedIn is not None:
+            book_event.checkedIn = checkedIn
+        session.commit()  # Commit the changes to the database
+
+        # Return success response
+        if book_event.checkedIn:
+            return jsonify({'message': 'Checking in successful', 'data': book_event.checkedIn, 'status': True}), 200
+        elif book_event.booked:
+            return jsonify({'message': 'Booking successful', 'data': book_event.booked, 'status': True}), 200
+
     except NoResultFound:
+        # If no booking entry exists for the user and event, create a new entry
         book_event = EventStatus(booked=booked, checkedIn=checkedIn, user_id=user_id, event_id=event_id)
         session.add(book_event)
+        session.commit()  # Commit the changes to the database
 
-    session.commit()
-    specific_booking = session.query(EventStatus).filter_by(event_id=event_id, user_id=user_id).all()
-
-    session.close()
-    for booking in specific_booking:
-        if booking.checkedIn:
-            print('checked in', booking.checkedIn)
-            return jsonify({'message': 'checking in successful', 'data': booking.checkedIn, 'status': True}), 200
-        elif booking.booked:
-            print('booked', booking.booked)
-            return jsonify({'message': 'booking successful', 'data': booking.booked, 'status': True}), 200
+        # Return success response
+        if checkedIn:
+            return jsonify({'message': 'Checking in successful', 'data': checkedIn, 'status': True}), 200
+        elif booked:
+            return jsonify({'message': 'Booking successful', 'data': booked, 'status': True}), 200
 
 
 @app.route('/', methods=['GET'])
