@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import os
 
-path = os.path.abspath('database/testClubManagment.db')
+path = os.path.abspath('database/clubManagement.db')
 engine = create_engine(f'sqlite:///{path}', echo=True)
 
 # Step 2: Define a base class using Declarative system
@@ -19,7 +19,6 @@ class Users(Base):
     email = Column(String, unique=True)
     phoneNumber = Column(String, unique=True)
     password = Column(String)
-    is_admin= Column(Boolean, default=False)
 
     profile = relationship('Profile', back_populates='user')
 
