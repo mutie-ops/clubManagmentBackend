@@ -18,6 +18,32 @@ jwt = JWTManager(app)
 CORS(app)
 
 
+def create_admin():
+    try:
+        # Check if admin user already exists
+        admin_user = session.query(Users).filter(Users.email == 'admin@gmail.com').first()
+
+        if admin_user:
+            print("Admin already exists")
+        else:
+            salt = bcrypt.gensalt()
+            hashed_password = bcrypt.hashpw('123'.encode('utf-8'), salt)
+            admin = Users(fullNames='Admin', phoneNumber='000',
+                          email='admin@gmail.com', password=hashed_password, is_admin=True)
+
+            session.add(admin)
+            session.commit()
+            print("Admin created successfully")
+    except Exception as e:
+        session.rollback()
+        print(f"Error creating admin: {e}")
+    finally:
+        session.close()
+
+
+create_admin()
+
+
 @app.route('/createUser', methods=['POST'])
 @cross_origin()
 def create_user():
@@ -74,7 +100,7 @@ def login():
 
         #  this will change and I WILL QUERY THE ENTIRE USER AND RELATIONSHIPS
         # user_data = {'userName': user.fullNames, 'phoneNumber': user.phoneNumber, 'uuid': user.id}
-        user_data = {'userName': user.fullNames, 'phoneNumber': user.phoneNumber}
+        user_data = {'userName': user.fullNames, 'phoneNumber': user.phoneNumber, 'isAdmin': user.is_admin}
 
         # At this point, the user exists and the password is correct
         access_token = create_access_token(identity=user.id, expires_delta=timedelta(days=7))
@@ -224,7 +250,6 @@ def booking():
 @app.route('/', methods=['GET'])
 def callBackUrl():
     return jsonify({'message': 'successful  deployment'})
-
 
 # if __name__ == '__main__':
 #     app.run('0.0.0.0', port=5000, debug=True)
