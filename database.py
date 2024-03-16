@@ -19,7 +19,7 @@ class Users(Base):
     email = Column(String, unique=True)
     phoneNumber = Column(String, unique=True)
     password = Column(String)
-
+    is_admin = Column(Boolean, default=False)
     profile = relationship('Profile', back_populates='user')
 
     events = relationship('ScheduleEvent', back_populates='user')
@@ -71,3 +71,5 @@ Base.metadata.create_all(engine)
 # Step 5: Create a session
 Session = sessionmaker(bind=engine)
 session = Session()
+
+# create admin logins
