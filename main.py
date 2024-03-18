@@ -53,8 +53,6 @@ def create_user():
         if not all(field in data for field in request_fields):
             return jsonify({'error': 'Missing required fields'}), 400
 
-        # TODO: CREATE A HASH PASSWORD  #DONE
-
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), salt)
         users = Users(fullNames=data['fullNames'], phoneNumber=data['phoneNumber'],

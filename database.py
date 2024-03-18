@@ -21,7 +21,6 @@ class Users(Base):
     phoneNumber = Column(String, unique=True)
     is_admin = Column(Boolean, default=False)
     password = Column(String)
-    is_admin = Column(Boolean, default=False)
     profile = relationship('Profile', back_populates='user')
 
     events = relationship('ScheduleEvent', back_populates='user')
