@@ -5,9 +5,8 @@ from database import session, ScheduleEvent, func, Users, EventStatus
 from datetime import datetime, timedelta
 import bcrypt
 from flask_jwt_extended import create_access_token
-from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import get_jwt_identity, JWTManager, verify_jwt_in_request
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 
@@ -17,6 +16,32 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 
 jwt = JWTManager(app)
 CORS(app)
+
+
+def create_admin():
+    try:
+        # Check if admin user already exists
+        admin_user = session.query(Users).filter(Users.email == 'admin@gmail.com').first()
+
+        if admin_user:
+            print("Admin already exists")
+        else:
+            salt = bcrypt.gensalt()
+            hashed_password = bcrypt.hashpw('123'.encode('utf-8'), salt)
+            admin = Users(fullNames='Admin', phoneNumber='000',
+                          email='admin@gmail.com', password=hashed_password, is_admin=True)
+
+            session.add(admin)
+            session.commit()
+            print("Admin created successfully")
+    except Exception as e:
+        session.rollback()
+        print(f"Error creating admin: {e}")
+    finally:
+        session.close()
+
+
+create_admin()
 
 
 @app.route('/createUser', methods=['POST'])
@@ -75,7 +100,7 @@ def login():
 
         #  this will change and I WILL QUERY THE ENTIRE USER AND RELATIONSHIPS
         # user_data = {'userName': user.fullNames, 'phoneNumber': user.phoneNumber, 'uuid': user.id}
-        user_data = {'userName': user.fullNames, 'phoneNumber': user.phoneNumber}
+        user_data = {'userName': user.fullNames, 'phoneNumber': user.phoneNumber, 'isAdmin': user.is_admin}
 
         # At this point, the user exists and the password is correct
         access_token = create_access_token(identity=user.id)
@@ -136,6 +161,17 @@ def create_event():
 @app.route('/getEventMonth', methods=['GET'])
 def get_event_current_month():
     try:
+
+        user_id = None
+        # Attempt to verify JWT token and get user identity
+        try:
+            verify_jwt_in_request()
+            user_id = get_jwt_identity()
+        except Exception as e:
+            # JWT token not present or invalid, continue without user identity
+            print("JWT token not present or invalid:", str(e))
+
+        print('user_id ', user_id)
         current_month = datetime.now().month
         str_month = f"{current_month:02d}"
 
@@ -152,12 +188,13 @@ def get_event_current_month():
             # Collecting EventStatus data for each event
 
             event_status_data = None
-            if event.event_statuses:
+            if event.event_statuses and user_id is not None:
                 status = event.event_statuses[0]  # Assuming there's only one event status per event
                 event_status_data = {
                     'booked': status.booked,
                     'checkedIn': status.checkedIn,
-                    'event_id': status.event_id
+                    'event_id': status.event_id,
+                    'user_id': user_id
                 }
 
             extract_data = {
