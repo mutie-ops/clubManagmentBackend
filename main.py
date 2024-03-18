@@ -243,6 +243,41 @@ def booking():
     if booked is not None:
         booked = booked.lower() == 'true'
 
+    try:
+        # Query to retrieve the specific booking entry for the user and event
+        book_event = session.query(EventStatus).filter_by(event_id=event_id, user_id=user_id).one()
+        # Update the booking status for the specific user and event
+        if booked is not None:
+            book_event.booked = booked
+        session.commit()  # Commit the changes to the database
+
+        # Return success response
+        if book_event.booked:
+            return jsonify({'message': 'Booking successful', 'data': book_event.booked, 'status': True}), 200
+
+    except NoResultFound:
+        # If no booking entry exists for the user and event, create a new entry
+        book_event = EventStatus(booked=booked, user_id=user_id, event_id=event_id)
+        session.add(book_event)
+        session.commit()  # Commit the changes to the database
+
+        # Return success response
+        if booked:
+            return jsonify({'message': 'Booking successful', 'data': booked, 'status': True}), 200
+
+    return jsonify({'message': 'No changes in booking status', 'status': False}), 400
+
+
+@app.route('/checkIn', methods=['POST'])
+@jwt_required()
+@cross_origin()
+def checkIn():
+    user_id = get_jwt_identity()
+    data = request.form.to_dict()
+    print(data)
+
+    event_id = data['event_id']
+
     # Update 'checkedIn' only if 'checkIn' key is available
     checkedIn = data.get('checkIn')
     if checkedIn is not None:
@@ -251,9 +286,7 @@ def booking():
     try:
         # Query to retrieve the specific booking entry for the user and event
         book_event = session.query(EventStatus).filter_by(event_id=event_id, user_id=user_id).one()
-        # Update the booking and check-in status for the specific user and event
-        if booked is not None:
-            book_event.booked = booked
+        # Update the check-in status for the specific user and event
         if checkedIn is not None:
             book_event.checkedIn = checkedIn
         session.commit()  # Commit the changes to the database
@@ -261,20 +294,12 @@ def booking():
         # Return success response
         if book_event.checkedIn:
             return jsonify({'message': 'Checking in successful', 'data': book_event.checkedIn, 'status': True}), 200
-        elif book_event.booked:
-            return jsonify({'message': 'Booking successful', 'data': book_event.booked, 'status': True}), 200
 
     except NoResultFound:
-        # If no booking entry exists for the user and event, create a new entry
-        book_event = EventStatus(booked=booked, checkedIn=checkedIn, user_id=user_id, event_id=event_id)
-        session.add(book_event)
-        session.commit()  # Commit the changes to the database
+        # Return error response if no booking entry exists for the user and event
+        return jsonify({'message': 'No booking found for the user and event', 'status': False}), 404
 
-        # Return success response
-        if checkedIn:
-            return jsonify({'message': 'Checking in successful', 'data': checkedIn, 'status': True}), 200
-        elif booked:
-            return jsonify({'message': 'Booking successful', 'data': booked, 'status': True}), 200
+    return jsonify({'message': 'No changes in check-in status', 'status': False}), 400
 
 
 @app.route('/', methods=['GET'])
