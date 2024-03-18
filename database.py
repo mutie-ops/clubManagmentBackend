@@ -19,6 +19,7 @@ class Users(Base):
     email = Column(String, unique=True)
     phoneNumber = Column(String, unique=True)
     password = Column(String)
+    is_admin = Column(Boolean, default=False)
 
     profile = relationship('Profile', back_populates='user')
 
