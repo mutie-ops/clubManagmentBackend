@@ -12,7 +12,7 @@ from sqlalchemy.orm import joinedload
 
 application = app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'MonkeyDluffy282'
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
 
 jwt = JWTManager(app)
 CORS(app)
